@@ -31,8 +31,19 @@ public:
 	UStaticMeshComponent* MeshComp;
 	UPROPERTY(EditAnywhere)
 	TEnumAsByte<TileType> Type{ TileType::Null };
+	UPROPERTY(EditAnywhere)
+	TArray<AActor*> Checkpoints;
 };
 
+USTRUCT()
+struct FPath
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(EditAnywhere)
+	int Length{ 0 };
+	TArray<TPair<int, int>> PathDirs;
+};
 
 UCLASS()
 class AMapManager : public AActor
@@ -40,39 +51,13 @@ class AMapManager : public AActor
 	GENERATED_BODY()
 public:
 	UFUNCTION(BlueprintCallable, CallInEditor)
-	void GenerateMap()
-	{
-		if (Map[0][0] != nullptr)
-			return;
-
-		for (int i = 0; i < MapSize; i++)
-		{
-			for (int j = 0; j < MapSize; j++)
-			{
-				assert(Mesh != nullptr);
-				float MeshScale = Mesh->GetBounds().SphereRadius;
-				Map[i][j] = GetWorld()->SpawnActor<AMapTile>();
-				Map[i][j]->SetActorLocation(FVector(j * TileSize * MeshScale, i * TileSize * MeshScale, 0));
-				Map[i][j]->SetActorScale3D(FVector(TileSize, TileSize, 1));
-				Map[i][j]->GetComponentByClass<UStaticMeshComponent>()->SetStaticMesh(Mesh);
-				Map[i][j]->GetComponentByClass<UStaticMeshComponent>()->SetMaterial(0, *Mats.Find(Map[i][j]->Type));
-			}
-		}
-	}
+	void GenerateMap();
 	UFUNCTION(BlueprintCallable, CallInEditor)
-	void DeleteMap()
-	{
-		
-		for (int i = 0; i < MapSize; i++)
-		{
-			for (int j = 0; j < MapSize; j++)
-			{
-				GetWorld()->DestroyActor(Map[i][j]);
-				Map[i][j] = nullptr;
-			}
-		}
-		
-	}
+	void DeleteMap();
+	UFUNCTION(BlueprintCallable, CallInEditor)
+	void GenPath();
+	UFUNCTION(BlueprintCallable, CallInEditor)
+	void DeletePath();
 public:
 	UPROPERTY(EditAnywhere)
 	int TileSize{1};
@@ -82,4 +67,6 @@ public:
 	TMap<TEnumAsByte<TileType>, UMaterialInstance*> Mats;
 protected:
 	std::array<std::array<AMapTile*, MapSize>, MapSize> Map;
+	UPROPERTY(EditAnywhere)
+	FPath Path;
 };
