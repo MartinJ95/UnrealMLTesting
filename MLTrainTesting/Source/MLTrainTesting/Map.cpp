@@ -1,4 +1,5 @@
 #include "Map.h"
+#include "Checkpoint.h"
 
 AMapTile::AMapTile()
 {
@@ -30,6 +31,8 @@ void AMapManager::GenerateMap()
 
 void AMapManager::DeleteMap()
 {
+	DeletePath();
+
 	for (int i = 0; i < MapSize; i++)
 	{
 		for (int j = 0; j < MapSize; j++)
@@ -42,8 +45,7 @@ void AMapManager::DeleteMap()
 
 void AMapManager::GenPath()
 {
-	Path.PathDirs.Empty();
-	Path.Length = 0;
+	DeletePath();
 
 	for (int i = 0; i < MapSize; i++)
 	{
@@ -57,6 +59,8 @@ void AMapManager::GenPath()
 	{
 		int stride = FMath::RandRange(1, MapSize - Path.Length);
 		int pos = FMath::RandRange(0, MapSize - 1);
+		Path.CheckPoints.Add(GetWorld()->SpawnActor<ACheckPoint>(Map[pos][Path.Length]->GetActorLocation() + FVector(0, 0, 100), FRotator()));
+		Path.CheckPoints.Add(GetWorld()->SpawnActor<ACheckPoint>(Map[pos][FMath::Min(Path.Length + stride, MapSize-1)]->GetActorLocation() + FVector(0, 0, 100), FRotator()));
 		Path.Length += stride;
 		Path.PathDirs.Emplace(pos, stride);
 	}
@@ -93,4 +97,50 @@ void AMapManager::DeletePath()
 			Map[i][j]->GetComponentByClass<UStaticMeshComponent>()->SetMaterial(0, *Mats.Find(TileType::Null));
 		}
 	}
+	for (int i = 0; i < Path.CheckPoints.Num(); i++)
+	{
+		GetWorld()->DestroyActor(Path.CheckPoints[i]);
+	}
+	Path.CheckPoints.Empty();
+}
+
+bool AMapManager::IsOnPath(const int X, const int Y) const
+{
+	int current = 0;
+
+	for (int i = 0; i < Path.PathDirs.Num(); i++)
+	{
+		if (X > current + Path.PathDirs[i].Value)
+			continue;
+
+		if (Y == Path.PathDirs[i].Key)
+			return true;
+	}
+	return false;
+}
+
+const TArray<TPair<int, int>> AMapManager::GetPath() const
+{
+	TArray<TPair<int, int>> path;
+
+	int current = 0;
+	for (int i = 0; i < Path.PathDirs.Num(); i++)
+	{
+		for (int j = 0; j < Path.PathDirs[i].Value; j++)
+		{
+			path.Emplace(Path.PathDirs[i].Key, current + j);
+		}
+
+		if (i == Path.PathDirs.Num() - 1)
+			continue;
+
+		current += Path.PathDirs[i].Value;
+
+		int verticalDir = (Path.PathDirs[i + 1].Key - Path.PathDirs[i].Key) < 0 ? -1 : 1;
+		for (int j = 0; j < FMath::Abs(Path.PathDirs[i + 1].Key - Path.PathDirs[i].Key); ++j)
+		{
+			path.Emplace(Path.PathDirs[i].Key + verticalDir * j, current);
+		}
+	}
+	return path;
 }

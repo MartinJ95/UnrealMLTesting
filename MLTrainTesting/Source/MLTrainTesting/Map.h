@@ -8,7 +8,9 @@
 
 #include "Map.generated.h"
 
-constexpr int MapSize = 10;
+class ACheckPoint;
+
+constexpr int MapSize = 25;
 
 UENUM(BlueprintType)
 enum  TileType : uint8
@@ -31,21 +33,21 @@ public:
 	UStaticMeshComponent* MeshComp;
 	UPROPERTY(EditAnywhere)
 	TEnumAsByte<TileType> Type{ TileType::Null };
-	UPROPERTY(EditAnywhere)
-	TArray<AActor*> Checkpoints;
 };
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FPath
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int Length{ 0 };
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<ACheckPoint*> CheckPoints;
 	TArray<TPair<int, int>> PathDirs;
 };
 
-UCLASS()
+UCLASS(BlueprintType)
 class AMapManager : public AActor
 {
 	GENERATED_BODY()
@@ -58,6 +60,9 @@ public:
 	void GenPath();
 	UFUNCTION(BlueprintCallable, CallInEditor)
 	void DeletePath();
+	UFUNCTION(BlueprintCallable)
+	bool IsOnPath(const int X, const int Y) const;
+	const TArray<TPair<int, int>> GetPath() const;
 public:
 	UPROPERTY(EditAnywhere)
 	int TileSize{1};
@@ -65,8 +70,10 @@ public:
 	UStaticMesh* Mesh{nullptr};
 	UPROPERTY(EditAnywhere)
 	TMap<TEnumAsByte<TileType>, UMaterialInstance*> Mats;
-protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int Size{ MapSize };
+public:
 	std::array<std::array<AMapTile*, MapSize>, MapSize> Map;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FPath Path;
 };
