@@ -1,10 +1,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameFramework/Character.h"
 #include "Enemy.generated.h"
 
 UCLASS()
-class AEnemy : public APawn
+class AEnemy : public ACharacter
 {
 	GENERATED_BODY()
 public:
