@@ -14,6 +14,7 @@ class ACheckPoint : public AActor
 	GENERATED_BODY()
 public:
 	ACheckPoint();
+	void NotifyActorBeginOverlap(AActor* OtherActor) override final;
 public:
 	UPROPERTY(EditAnywhere)
 	USceneComponent* Root;
